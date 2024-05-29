@@ -1,0 +1,70 @@
+version: '3'
+
+volumes:
+  gomi-settlement_db_vol:
+    driver: local
+#  gomi-settlement_test_db_vol:
+#    driver: local
+
+services:
+#  test-db:
+#    image: mysql/mysql-server:8.0
+#    container_name: gomi-settlement-test-db
+#    restart: always
+#    command:
+#      - --default-authentication-plugin=mysql_native_password
+#      - --character-set-server=utf8mb4
+#      - --collation-server=utf8mb4_unicode_520_ci
+#      - --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+#    environment:
+#      MYSQL_ROOT_PASSWORD: password
+#      MYSQL_USER: user
+#      MYSQL_PASSWORD: password
+#      MYSQL_DATABASE: gomi-settlement-test-db
+#    ports:
+#      - '33613:3306'
+#    volumes:
+#      - gomi-settlement_test_db_vol:/var/lib/mysql
+  db:
+    image: mysql/mysql-server:8.0
+    container_name: gomi-settlement-dev-db
+    restart: always
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_520_ci
+      - --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: gomi-settlement-dev-db
+    ports:
+      - '33610:3306'
+    volumes:
+      - gomi-settlement_db_vol:/var/lib/mysql
+  shawdow-db:
+    image: mysql/mysql-server:8.0
+    container_name: gomi-settlement-dev-shadow-db
+    restart: always
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_520_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: gomi-settlement-dev-shadow-db
+    ports:
+      - '33611:3306'
+
+  redis:
+    container_name: gomi-settlement-redis
+    image: redis:latest
+    command: redis-server --port 6379
+    ports:
+      - '6379:6379'
+    labels:
+      - 'name=redis'
+      - 'mode=standalone'

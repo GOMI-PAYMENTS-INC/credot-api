@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Crawling` ADD COLUMN `failedReason` VARCHAR(191) NULL,
+    MODIFY `status` ENUM('REQUEST', 'RECEIVE', 'FAILED', 'DONE') NOT NULL DEFAULT 'REQUEST';

@@ -1,0 +1,440 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id                               Int      @id @default(autoincrement())
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @default(now()) @updatedAt
+  email                            String   @unique
+  phoneNumber                      String?  @unique
+  password                         String?
+  name                             String?
+  role                             RoleType @default(USER)
+  signatureNumber                  String?
+  bankName                         String?
+  bankAccount                      String?
+  bankAccountHolder                String?
+  userType                         UserType @default(CORPORATE)
+  businessNumber                   String?
+  companyEmail                     String?
+  corporateRegistrationNumber      String?
+  industryType                     String?
+  businessType                     String?
+  companyAddress                   String?
+  managerPosition                  String?
+  managerName                      String?
+  futureFundServiceFeeRate         Decimal  @default(0.0000) @db.Decimal(5, 4)
+  businessLicenseFileId            Int?
+  corporateRegisterFileId          Int?
+  certificateOfCorporateSealFileId Int?
+  limitFutureFund                  Int?     @default(0)
+
+  bonds           Bond[]
+  crawlingInfos   CrawlingInfo[]
+  crawlings       Crawling[]
+  Prefund         Prefund[]
+  BondDeposit     BondDeposit[]
+  PrefundByCard   PrefundByCard[]
+  CardInfos       CardInfos[]
+  FutureFund      FutureFund[]
+  FutureFundApply FutureFundApply[]
+}
+
+model Apply {
+  id                Int         @id @default(autoincrement())
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now()) @updatedAt
+  status            ApplyStatus @default(NEW_APPLY)
+  email             String      @unique
+  phoneNumber       String?
+  name              String?
+  companyName       String?
+  companyType       String?
+  industryType      String?
+  address           String?
+  monthlySales      String?
+  jobTitle          String?
+  interestedService String?
+  marketingAgree    Boolean     @default(false)
+}
+
+model Files {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  name      String?
+  key       String?
+  extension String?
+  url       String?
+}
+
+// 휴대폰 인증 테이블
+model PhoneVerification {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  phoneNumber String    @db.VarChar(255)
+  code        String    @db.VarChar(255)
+  expiredAt   DateTime
+  validatedAt DateTime?
+  isVerified  Boolean   @default(false)
+}
+
+// 크롤링 요청 테이블
+model Crawling {
+  id            Int             @id @default(autoincrement())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  type          CrawlingType    @default(EASYSHOP)
+  status        CrawlingStatus  @default(REQUEST)
+  attempts      Int?            @default(1)
+  requestId     String?
+  failedReason  String?         @db.LongText
+  isBatch       Boolean         @default(false)
+  User          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int?
+  applyId       Int?
+  CrawlingFiles CrawlingFiles[]
+}
+
+model CrawlingFiles {
+  id         Int               @id @default(autoincrement())
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @default(now()) @updatedAt
+  type       CrawlingFileType?
+  url        String?
+  Crawling   Crawling          @relation(fields: [crawlingId], references: [id], onDelete: Cascade)
+  crawlingId Int
+}
+
+// 크롤링 계정 요청 테이블
+model CrawlingInfo {
+  id                Int                 @id @default(autoincrement())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now()) @updatedAt
+  type              CrawlingType        @default(EASYSHOP)
+  accountId         String?
+  password          String?
+  User              User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            Int?
+  applyId           Int?
+  CrawlingInfoCards CrawlingInfoCards[]
+}
+
+// 크롤링 계정 요청 테이블
+model CrawlingInfoCards {
+  id              Int              @id @default(autoincrement())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  cardCompanyName CardCompanyName?
+  franchiseNumber String?
+  crawlingInfoId  Int
+  CrawlingInfo    CrawlingInfo     @relation(fields: [crawlingInfoId], references: [id], onDelete: Cascade)
+}
+
+// 채권 상세 테이블
+model PrefundByCard {
+  id                    Int              @id @default(autoincrement())
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @default(now()) @updatedAt
+  prefundGroupAt        String
+  salesGroupAt          String?
+  cardSettlementGroupAt String?
+  status                PrefundStatus    @default(READY)
+  prefundAt             String?
+  depositAt             String?
+  cardCompanyName       CardCompanyName?
+  userId                Int
+  salesPrice            Int              @default(0)
+  cardCommission        Int              @default(0)
+  serviceCommission     Int              @default(0)
+  setoff                Int              @default(0)
+  applyId               Int?
+
+  User       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Prefund    Prefund[]
+  FutureFund FutureFund[]
+
+  @@unique([userId, cardCompanyName, prefundGroupAt, salesGroupAt])
+}
+
+model FutureFund {
+  id              Int             @id @default(autoincrement())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @default(now()) @updatedAt
+  fundGroupAt     String
+  futureFundType  FutureFundType?
+  price           Int             @default(0) // 이용 중인 금액
+  applyPrice      Int             @default(0) // 신청 금액
+  repaymentPrice  Int             @default(0) // 원금 상환
+  accrualFees     Int             @default(0) // 발생 수수료
+  accumulatedFees Int             @default(0) // 누적 수수료
+  repaymentFees   Int             @default(0) // 수수료 상환
+  userId          Int
+  prefundByCardId Int?
+  User            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PrefundByCard   PrefundByCard?  @relation(fields: [prefundByCardId], references: [id], onDelete: Cascade)
+}
+
+model FutureFundApply {
+  id                Int              @id @default(autoincrement())
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @default(now()) @updatedAt
+  applyAt           String
+  rejectReason      String?
+  status            FutureFundStatus
+  limit             Int              @default(0) // 한도
+  futureFundPrice   Int              @default(0) // 이용 중인 금액
+  applyPrice        Int              @default(0) // 신청 금액
+  avgSalesPrice     Int              @default(0) // 최근 7일 매출
+  avgSalesPriceRate Decimal          @default(0.000) @db.Decimal(10, 3) // 최근 7일 매출 증감율
+  count             Int              @default(0) // 최근 미래 정산 이용 수
+  userId            Int
+  User              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Prefund {
+  id                      Int              @id @default(autoincrement())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @default(now()) @updatedAt
+  bondId                  Int
+  prefundGroupAt          String
+  approvalType            ApprovalType?
+  approvalNumber          String?
+  status                  PrefundStatus    @default(READY)
+  transactionId           String
+  transactionAt           DateTime?
+  cardCompanyName         CardCompanyName?
+  originalCardCompanyName String?
+  salesPrice              Int              @default(0)
+  cardCommission          Int              @default(0)
+  serviceCommission       Int              @default(0)
+  originalBusinessDay     Int              @default(0)
+  businessDay             Int              @default(1)
+  userId                  Int
+
+  prefundByCardId Int?
+  applyId         Int?
+
+  User          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Bond          Bond           @relation(fields: [bondId], references: [id], onDelete: Cascade)
+  PrefundByCard PrefundByCard? @relation(fields: [prefundByCardId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionId, userId])
+}
+
+// 채권 테이블
+model BondDeposit {
+  id                      Int              @id @default(autoincrement())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @default(now()) @updatedAt
+  transactionAt           DateTime?
+  affiliateStoreNumber    String?
+  cardNumber              String?
+  cardCompanyName         CardCompanyName?
+  originalCardCompanyName String?
+  cardType                CardType?
+  approvalType            ApprovalType?
+  approvalNumber          String?
+  approvalAmount          Int              @default(0)
+  claimingResult          String?
+  claimingAt              String?
+  installmentPeriod       String?
+  vat                     Int              @default(0)
+  commission              Int              @default(0)
+  depositAt               String?
+  depositAmount           Int              @default(0)
+  terminalNumber          String?
+  terminalName            String?
+  vanType                 VanType?         @default(KICC)
+  userId                  Int?
+
+  User    User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applyId Int?
+
+  @@unique([transactionAt, approvalType, approvalNumber, cardNumber, approvalAmount])
+}
+
+model Bond {
+  id                      Int              @id @default(autoincrement())
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @default(now()) @updatedAt
+  transactionId           String?
+  transactionAt           DateTime?
+  purchaseAt              DateTime?
+  affiliateStoreNumber    String?
+  cardNumber              String?
+  cardCompanyName         CardCompanyName?
+  originalCardCompanyName String?
+  cardType                CardType?
+  approvalType            ApprovalType?
+  approvalNumber          String?
+  approvalAmount          Int              @default(0)
+  claimingResult          String?
+  claimingAt              String?
+  installmentPeriod       String?
+  vat                     Int              @default(0)
+  commission              Int              @default(0)
+  depositAt               DateTime?
+  depositAmount           Int              @default(0)
+  terminalNumber          String?
+  terminalName            String?
+  vanType                 VanType?         @default(KICC)
+  userId                  Int?
+
+  User    User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Prefund Prefund[]
+  applyId Int?
+
+  @@unique([transactionId, userId])
+}
+
+model SubstituteHoliday {
+  id            Int      @id @default(autoincrement())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+  yearMonthDate String
+}
+
+model CardInfos {
+  id              Int              @id @default(autoincrement())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  userId          Int?
+  type            CrawlingType     @default(EASYSHOP)
+  cardCompanyName CardCompanyName?
+  settlementCycle Int              @default(0)
+  creditCardRate  Decimal          @default(0.0000) @db.Decimal(5, 4)
+  checkCardRate   Decimal          @default(0.0000) @db.Decimal(5, 4)
+  byBusinessDay   Boolean          @default(true)
+
+  User    User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applyId Int?
+
+  @@unique([userId, type, cardCompanyName])
+}
+
+model Auth {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now()) @updatedAt
+  status       AuthStatus @default(ACTIVE)
+  token        String?    @db.LongText
+  refreshToken String?    @db.LongText
+  type         AuthType   @default(GOOGLE)
+}
+
+model CardClassification {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  cardNumber String
+  type       CardType?
+
+  @@unique([cardNumber])
+}
+
+enum CrawlingType {
+  EASYSHOP
+  CREDIT_FINANCE
+  INNOPAY
+}
+
+enum CrawlingFileType {
+  RECORD
+  EXCEL
+}
+
+enum VanType {
+  KICC
+}
+
+enum ApprovalType {
+  APPROVED
+  CANCEL
+}
+
+enum PrefundStatus {
+  READY
+  DEPOSIT_DONE
+  SETOFF
+  DONE
+}
+
+enum FutureFundStatus {
+  READY
+  DONE
+  REJECT
+  CANCEL
+}
+
+enum CrawlingStatus {
+  REQUEST
+  RECEIVE
+  FAILED
+  DONE
+}
+
+enum ApplyStatus {
+  NEW_APPLY
+  IN_BUSINESS
+  IN_CONTRACT
+  IN_HOLD
+}
+
+enum CardType {
+  CREDIT
+  CHECK
+}
+
+enum RoleType {
+  USER
+  ADMIN
+}
+
+enum UserType {
+  CORPORATE
+  INDIVIDUAL
+}
+
+enum CardCompanyName {
+  BC_CARD
+  KB_CARD
+  HANA_CARD
+  HYUNDAE_CARD
+  SHINHAN_CARD
+  SAMSUNG_CARD
+  NH_CARD
+  LOTTE_CARD
+  HDO_CARD
+  CREDIT_CARD
+  WOORI_CARD
+}
+
+enum AuthStatus {
+  ACTIVE
+  EXPIRE
+}
+
+enum AuthType {
+  GOOGLE
+}
+
+enum FutureFundType {
+  DAILY
+  REPAYMENT
+  REPAYMENT_READY
+  APPLY
+  APPLY_CANCEL
+  REPAYMENT_CANCEL
+}

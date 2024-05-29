@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Prefund` MODIFY `status` ENUM('READY', 'DEPOSIT_DONE', 'SETOFF', 'DONE') NOT NULL DEFAULT 'READY';

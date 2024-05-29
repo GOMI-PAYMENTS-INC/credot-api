@@ -1,0 +1,26 @@
+name: CD for dev
+
+concurrency:
+  group: cd-for-dev
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Run scripts in server
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.AWS_PROD_KEY }}
+          host: ${{ secrets.AWS_PROD_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          script: |
+            ./dev-deploy.sh

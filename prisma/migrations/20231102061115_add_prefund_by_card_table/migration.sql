@@ -1,0 +1,26 @@
+-- AlterTable
+ALTER TABLE `Prefund` ADD COLUMN `prefundByCardId` INTEGER NULL;
+
+-- CreateTable
+CREATE TABLE `PrefundByCard` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `prefundGroupAt` VARCHAR(191) NOT NULL,
+    `status` ENUM('READY', 'DEPOSIT_DONE', 'SETOFF', 'DONE') NOT NULL DEFAULT 'READY',
+    `prefundAt` VARCHAR(191) NULL,
+    `cardCompanyName` ENUM('BC_CARD', 'KB_CARD', 'HANA_CARD', 'HYUNDAE_CARD', 'SHINHAN_CARD', 'SAMSUNG_CARD', 'NH_CARD', 'LOTTE_CARD', 'HDO_CARD') NULL,
+    `userId` INTEGER NOT NULL,
+    `salesPrice` INTEGER NOT NULL DEFAULT 0,
+    `cardCommission` INTEGER NOT NULL DEFAULT 0,
+    `serviceCommission` INTEGER NOT NULL DEFAULT 0,
+    `offset` INTEGER NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `PrefundByCard` ADD CONSTRAINT `PrefundByCard_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Prefund` ADD CONSTRAINT `Prefund_prefundByCardId_fkey` FOREIGN KEY (`prefundByCardId`) REFERENCES `PrefundByCard`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
