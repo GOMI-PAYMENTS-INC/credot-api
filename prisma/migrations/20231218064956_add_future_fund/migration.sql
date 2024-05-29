@@ -1,0 +1,24 @@
+-- CreateTable
+CREATE TABLE `FutureFund` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `fundGroupAt` VARCHAR(191) NOT NULL,
+    `futureFundType` ENUM('DAILY', 'REPAYMENT', 'APPLY', 'APPLY_CANCEL', 'REPAYMENT_CANCEL') NULL,
+    `price` INTEGER NOT NULL DEFAULT 0,
+    `applyPrice` INTEGER NOT NULL DEFAULT 0,
+    `repaymentPrice` INTEGER NOT NULL DEFAULT 0,
+    `accrualFees` INTEGER NOT NULL DEFAULT 0,
+    `accumulatedFees` INTEGER NOT NULL DEFAULT 0,
+    `repaymentFees` INTEGER NOT NULL DEFAULT 0,
+    `userId` INTEGER NOT NULL,
+    `prefundByCardId` INTEGER NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `FutureFund` ADD CONSTRAINT `FutureFund_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `FutureFund` ADD CONSTRAINT `FutureFund_prefundByCardId_fkey` FOREIGN KEY (`prefundByCardId`) REFERENCES `PrefundByCard`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
